@@ -452,7 +452,9 @@ void AyuSettings::save() {
 }
 
 void AyuSettings::reset() {
+	auto notes = getInstance()._profileNotes.current();
 	getInstance() = AyuSettings();
+	getInstance()._profileNotes = std::move(notes);
 	save();
 }
 
@@ -504,6 +506,43 @@ void AyuSettings::removeQuickReply(const QString &text) {
 	if (std::erase(_quickReplies, text)) {
 		save();
 	}
+}
+
+QString AyuSettings::profileNote(uint64 accountId, uint64 peerId) const {
+	const auto key = std::to_string(accountId) + ":" + std::to_string(peerId);
+	const auto &notes = _profileNotes.current();
+	const auto found = notes.find(key);
+	return (found == notes.end())
+		? QString()
+		: QString::fromStdString(found->second);
+}
+
+rpl::producer<QString> AyuSettings::profileNoteValue(
+		uint64 accountId,
+		uint64 peerId) const {
+	const auto key = std::to_string(accountId) + ":" + std::to_string(peerId);
+	return _profileNotes.value() | rpl::map([=](const auto &notes) {
+		const auto found = notes.find(key);
+		return (found == notes.end())
+			? QString()
+			: QString::fromStdString(found->second);
+	});
+}
+
+void AyuSettings::setProfileNote(
+		uint64 accountId,
+		uint64 peerId,
+		const QString &text) {
+	const auto key = std::to_string(accountId) + ":" + std::to_string(peerId);
+	auto notes = _profileNotes.current();
+	const auto trimmed = text.trimmed();
+	if (trimmed.isEmpty()) {
+		notes.erase(key);
+	} else {
+		notes[key] = trimmed.toStdString();
+	}
+	_profileNotes = std::move(notes);
+	save();
 }
 
 void AyuSettings::addShadowBan(int64 id) {
@@ -1138,6 +1177,7 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"ghostModeSettings", ghostAccounts},
 		{"useGlobalGhostMode", s._useGlobalGhostMode.current()},
 		{"quickReplies", quickReplies},
+		{"profileNotes", s._profileNotes.current()},
 		{"bypassNoForwards", s._bypassNoForwards.current()},
 		{"autoSaveTtlMedia", s._autoSaveTtlMedia.current()},
 		{"saveDeletedMessages", s._saveDeletedMessages.current()},
@@ -1245,6 +1285,7 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 
 	s._useGlobalGhostMode = j.value("useGlobalGhostMode", defaults._useGlobalGhostMode.current());
 	s._quickReplies.clear();
+	s._profileNotes = j.value("profileNotes", defaults._profileNotes.current());
 	if (j.contains("quickReplies") && j["quickReplies"].is_array()) {
 		for (const auto &entry : j["quickReplies"]) {
 			if (!entry.is_string() || s._quickReplies.size() >= 20) {

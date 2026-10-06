@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_actions.h"
 
+#include "ayu/ayu_settings.h"
 #include "api/api_blocked_peers.h"
 #include "api/api_chat_participants.h"
 #include "api/api_credits.h"
@@ -92,6 +93,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/vertical_list.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/checkbox.h"
+#include "ui/widgets/fields/input_field.h"
 #include "ui/widgets/labels.h"
 #include "ui/widgets/menu/menu_add_action_callback.h"
 #include "ui/widgets/menu/menu_add_action_callback_factory.h"
@@ -792,6 +794,30 @@ void DeleteContactNote(
 			showError(error.description());
 		}
 	}).send();
+}
+
+void EditMonstergramNoteBox(
+		not_null<Ui::GenericBox*> box,
+		uint64 accountId,
+		uint64 peerId) {
+	const auto &settings = AyuSettings::getInstance();
+	box->setTitle(tr::ayu_ProfileNote());
+	const auto input = box->addRow(object_ptr<Ui::InputField>(
+		box,
+		st::editPeerDescription,
+		Ui::InputField::Mode::MultiLine,
+		tr::ayu_ProfileNotePlaceholder(),
+		settings.profileNote(accountId, peerId)));
+	input->setMaxLength(4096);
+	box->setFocusCallback([=] { input->setFocusFast(); });
+	box->addButton(tr::lng_box_done(), [=] {
+		AyuSettings::getInstance().setProfileNote(
+			accountId,
+			peerId,
+			input->getLastText());
+		box->closeBox();
+	});
+	box->addButton(tr::lng_cancel(), [=] { box->closeBox(); });
 }
 
 [[nodiscard]] object_ptr<Ui::SlideWrap<>> CreateNotes(
@@ -1526,16 +1552,18 @@ Section DetailsFiller::makeInfo() {
 		return true;
 	};
 
-	const auto addTranslateToMenu = [&,
+	const auto setupAboutContextMenu = [&,
 			peer = _peer.get(),
 			controller = _controller->parentController()](
 			not_null<Ui::FlatLabel*> label,
 			rpl::producer<TextWithEntities> &&text) {
 		struct State {
 			rpl::variable<TextWithEntities> labelText;
+			rpl::variable<TextWithEntities> aboutText;
 		};
 		const auto state = label->lifetime().make_state<State>();
 		state->labelText = std::move(text);
+		state->aboutText = AboutValue(peer);
 		label->setContextMenuHook([=](
 				Ui::FlatLabel::ContextMenuRequest request) {
 			if (request.link) {
@@ -1552,24 +1580,49 @@ Section DetailsFiller::makeInfo() {
 					return;
 				}
 			}
-			label->fillContextMenu(request);
-			if (Ui::SkipTranslate(state->labelText.current())) {
+			const auto selected = !request.selection.empty();
+			const auto full = state->labelText.current();
+			const auto about = state->aboutText.current();
+			const auto advanced = (about.text.size() < full.text.size());
+			if (selected || !advanced) {
+				label->fillContextMenu(request);
+			} else {
+				if (!about.empty()) {
+					request.menu->addAction(
+						tr::lng_context_copy_text(tr::now),
+						[=] {
+							TextUtilities::SetClipboardText(
+								TextForMimeData::WithExpandedLinks(about));
+						});
+				}
+				if (const auto link = request.link) {
+					const auto copy = link->copyToClipboardContextItemText();
+					if (!copy.isEmpty()) {
+						request.menu->addAction(
+							copy,
+							[text = link->copyToClipboardText()] {
+								TextUtilities::SetClipboardText({ text });
+							});
+					}
+				}
+			}
+			if (Ui::SkipTranslate(selected ? full : about)) {
 				return;
 			}
-			auto item = (request.selection.empty()
-				? tr::lng_context_translate
-				: tr::lng_context_translate_selected)(tr::now);
+			auto item = (selected
+				? tr::lng_context_translate_selected
+				: tr::lng_context_translate)(tr::now);
 			request.menu->addAction(std::move(item), [=] {
 				controller->window().show(Box(
 					Ui::TranslateBox,
 					peer,
 					MsgId(),
-					request.selection.empty()
-						? state->labelText.current()
-						: Ui::Text::Mid(
-							state->labelText.current(),
+					(selected
+						? Ui::Text::Mid(
+							full,
 							request.selection.from,
-							request.selection.to - request.selection.from),
+							request.selection.to - request.selection.from)
+						: about),
 					false));
 			});
 		});
@@ -1749,8 +1802,17 @@ Section DetailsFiller::makeInfo() {
 		const auto about = addInfoLine(
 			std::move(label),
 			AboutWithAdvancedValue(user));
-		addTranslateToMenu(about.text, AboutWithAdvancedValue(user));
+		setupAboutContextMenu(about.text, AboutWithAdvancedValue(user));
 		SetupAboutPeerIdDrag(about.text, user);
+		if (!user->isSelf()) {
+			const auto accountId = user->session().userId().bare;
+			const auto peerId = user->id.value;
+			addInfoLine(
+				tr::ayu_ProfileNote(),
+				AyuSettings::getInstance().profileNoteValue(
+					accountId,
+					peerId) | rpl::map(tr::marked));
+		}
 
 		const auto usernameLine = addInfoOneLine(
 			UsernamesSubtext(_peer, tr::lng_info_username_label()),
@@ -1942,7 +2004,7 @@ Section DetailsFiller::makeInfo() {
 			? rpl::single(TextWithEntities())
 			: AboutWithAdvancedValue(_peer));
 		if (!_topic) {
-			addTranslateToMenu(about.text, AboutWithAdvancedValue(_peer));
+			setupAboutContextMenu(about.text, AboutWithAdvancedValue(_peer));
 			SetupAboutPeerIdDrag(about.text, _peer);
 		}
 
@@ -2950,7 +3012,7 @@ void ActionsFiller::addAffiliateProgram(not_null<UserData*> user) {
 		bool requested = false;
 		Fn<void()> open;
 	};
-	const auto recipients = std::make_shared<StarRefRecipients>();
+	const auto recipients = inner->lifetime().make_state<StarRefRecipients>();
 	recipients->open = [=] {
 		if (!recipients->list.empty()) {
 			const auto program = user->botInfo->starRefProgram;
@@ -2960,10 +3022,11 @@ void ActionsFiller::addAffiliateProgram(not_null<UserData*> user) {
 				recipients->list));
 		} else if (!recipients->requested) {
 			recipients->requested = true;
-			const auto done = [=](std::vector<not_null<PeerData*>> list) {
+			const auto done = crl::guard(inner, [=](
+					std::vector<not_null<PeerData*>> list) {
 				recipients->list = std::move(list);
 				recipients->open();
-			};
+			});
 			Info::BotStarRef::ResolveRecipients(&user->session(), done);
 		}
 	};
@@ -3303,15 +3366,29 @@ void ActionsFiller::fillUserActions(not_null<UserData*> user) {
 	}
 	addShareContactAction(user);
 	if (!user->isSelf()) {
+		const auto controller = _controller->parentController();
+		const auto accountId = user->session().userId().bare;
+		const auto peerId = user->id.value;
+		AddActionButton(
+			_wrap,
+			tr::ayu_ProfileNoteEdit(),
+			rpl::single(true),
+			[=] {
+				controller->window().show(Box(
+					EditMonstergramNoteBox,
+					accountId,
+					peerId));
+			},
+			&st::infoIconEdit);
 		addEditContactAction(user);
 		addDeleteContactAction(user);
 	}
+	if (CanReportBot(user)) {
+		addBotCommandActions(user);
+		_wrap->add(CreateSkipWidget(_wrap, st::infoBlockButtonSkip));
+		addReportAction();
+	}
 	if (!user->isSelf() && !user->isSupport() && !user->isVerifyCodes()) {
-		if (user->isBot()) {
-			addBotCommandActions(user);
-			_wrap->add(CreateSkipWidget(_wrap, st::infoBlockButtonSkip));
-			addReportAction();
-		}
 		addBlockAction(user);
 	}
 }

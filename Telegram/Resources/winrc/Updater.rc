@@ -35,8 +35,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,0,9,0
- PRODUCTVERSION 7,0,9,0
+ FILEVERSION 7,2,9,0
+ PRODUCTVERSION 7,2,9,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -52,11 +52,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Radolyn Labs"
-            VALUE "FileDescription", "Monstergram Desktop Güncelleyici"
-            VALUE "FileVersion", "7.0.9.0"
+            VALUE "FileDescription", "Monstergram Desktop Updater"
+            VALUE "FileVersion", "7.2.9.0"
             VALUE "LegalCopyright", "Copyright (C) 2014-2026"
             VALUE "ProductName", "Monstergram Desktop"
-            VALUE "ProductVersion", "7.0.9.0"
+            VALUE "ProductVersion", "7.2.9.0"
         END
     END
     BLOCK "VarFileInfo"

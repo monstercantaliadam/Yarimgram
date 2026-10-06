@@ -272,6 +272,11 @@ public:
 	[[nodiscard]] const std::vector<QString> &quickReplies() const { return _quickReplies; }
 	bool addQuickReply(const QString &text);
 	void removeQuickReply(const QString &text);
+	[[nodiscard]] QString profileNote(uint64 accountId, uint64 peerId) const;
+	[[nodiscard]] rpl::producer<QString> profileNoteValue(
+		uint64 accountId,
+		uint64 peerId) const;
+	void setProfileNote(uint64 accountId, uint64 peerId, const QString &text);
 
 	[[nodiscard]] MessageShotSettings &messageShotSettings() { return _messageShotSettings; }
 	[[nodiscard]] const MessageShotSettings &messageShotSettings() const { return _messageShotSettings; }
@@ -653,6 +658,7 @@ private:
 	rpl::variable<bool> _saveMessagesHistory = true;
 	rpl::variable<bool> _saveForBots = false;
 	std::vector<QString> _quickReplies;
+	rpl::variable<std::map<std::string, std::string>> _profileNotes;
 	std::unordered_set<int64> _shadowBanIds;
 	rpl::variable<bool> _filtersEnabled = false;
 	rpl::variable<bool> _filtersEnabledInChats = false;

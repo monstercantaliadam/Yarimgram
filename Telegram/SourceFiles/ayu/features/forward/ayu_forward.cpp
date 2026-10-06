@@ -237,7 +237,6 @@ bool isAyuForwardNeeded(const std::vector<not_null<HistoryItem*>> &items) {
 bool isAyuForwardNeeded(not_null<HistoryItem*> item) {
 	if (item->isDeleted()
 		|| item->isAyuNoForwards()
-		|| item->unsupportedTTL()
 		|| (item->media() && item->media()->ttlSeconds())
 		|| (AyuSettings::getInstance().bypassNoForwards() && !item->history()->peer->allowsForwarding())) {
 		return true;

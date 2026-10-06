@@ -11,7 +11,7 @@ on:
 
 concurrency:
   group: monstergram-windows-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -123,6 +123,7 @@ jobs:
           key: ${{ runner.OS }}-x64-third-party-v3-${{ env.CACHE_KEY }}-${{ env.PATCH_KEY }}
           restore-keys: |
             ${{ runner.OS }}-x64-third-party-v3-${{ env.CACHE_KEY }}-
+            ${{ runner.OS }}-x64-third-party-v3-
             ${{ runner.OS }}-x64-third-party-v2-${{ env.CACHE_KEY }}-
 
       - name: Libraries Cache
@@ -138,6 +139,7 @@ jobs:
           key: ${{ runner.OS }}-x64-libs-v3-${{ env.CACHE_KEY }}-${{ env.PATCH_KEY }}
           restore-keys: |
             ${{ runner.OS }}-x64-libs-v3-${{ env.CACHE_KEY }}-
+            ${{ runner.OS }}-x64-libs-v3-
             ${{ runner.OS }}-x64-libs-v2-${{ env.CACHE_KEY }}-
 
       - name: Qt Cache
@@ -150,6 +152,7 @@ jobs:
           key: ${{ runner.OS }}-x64-qt-v3-${{ env.CACHE_KEY }}-${{ env.PATCH_KEY }}
           restore-keys: |
             ${{ runner.OS }}-x64-qt-v3-${{ env.CACHE_KEY }}-
+            ${{ runner.OS }}-x64-qt-v3-
             ${{ runner.OS }}-x64-qt-v2-${{ env.CACHE_KEY }}-
 
       - name: Prepare Libraries
@@ -230,13 +233,13 @@ jobs:
         id: build
         shell: pwsh
         env:
-          CMAKE_BUILD_PARALLEL_LEVEL: 1
+          CMAKE_BUILD_PARALLEL_LEVEL: 2
           _PreferredToolArchitecture: x64
         run: |
           Set-Location (Join-Path $env:TBUILD 'tdesktop')
           $PSNativeCommandUseErrorActionPreference = $false
           $buildLog = Join-Path $env:RUNNER_TEMP 'monstergram-build.log'
-          & cmake --build out --config Debug --target Telegram --parallel 1 -- /p:CL_MPCount=2 2>&1 | Tee-Object -FilePath $buildLog
+          & cmake --build out --config Debug --target Telegram --parallel 2 -- /p:CL_MPCount=2 2>&1 | Tee-Object -FilePath $buildLog
           $buildExit = $LASTEXITCODE
           if ($buildExit -ne 0) {
             $errors = @(Get-Content $buildLog | Select-String -Pattern 'warning C[0-9]+|error C[0-9]+|error LNK[0-9]+|error MSB[0-9]+|fatal error|error:')

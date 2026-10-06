@@ -493,7 +493,23 @@ void PaintRow(
 	if (swipeTranslation) {
 		p.translate(swipeMirrored ? swipeTranslation : -swipeTranslation, 0);
 	}
-	p.fillRect(geometry, bg);
+	if (context.active || context.selected) {
+		p.fillRect(geometry, st::dialogsBg);
+		p.save();
+		p.setPen(Qt::NoPen);
+		p.setBrush(bg);
+		p.drawRoundedRect(
+			geometry.marginsRemoved(QMargins(
+				st::dialogsRowInset,
+				st::dialogsRowInset,
+				st::dialogsRowInset,
+				st::dialogsRowInset)),
+			st::dialogsRowRadius,
+			st::dialogsRowRadius);
+		p.restore();
+	} else {
+		p.fillRect(geometry, bg);
+	}
 	if (!(flags & Flag::TopicJumpRipple)) {
 		auto ripple = context.active
 			? st::dialogsRippleBgActive

@@ -91,12 +91,9 @@ void AyuLanguage::loadCachedLanguage() {
 }
 
 void AyuLanguage::applyBundledTurkishLanguage() {
-	if (!Lang::GetInstance().id().startsWith(u"tr"_q)) {
-		return;
-	}
 	auto file = QFile(u":/gui/lang/ayu/tr.json"_q);
 	if (file.open(QIODevice::ReadOnly)) {
-		applyLanguageJson(QJsonDocument::fromJson(file.readAll()));
+		applyLanguageJson(QJsonDocument::fromJson(file.readAll()), true);
 	}
 }
 
@@ -187,9 +184,12 @@ void AyuLanguage::fetchError(QNetworkReply::NetworkError e) {
 	}
 }
 
-void AyuLanguage::applyLanguageJson(QJsonDocument doc) {
+void AyuLanguage::applyLanguageJson(
+		QJsonDocument doc,
+		bool forceTurkish) {
 	const auto json = doc.object();
-	const auto turkish = Lang::GetInstance().id().startsWith(u"tr"_q);
+	const auto turkish = forceTurkish
+		|| Lang::GetInstance().id().startsWith(u"tr"_q);
 	for (const QString &brokenKey : json.keys()) {
 		auto key = qsl("ayu_") + brokenKey;
 		auto val = json.value(brokenKey).toString().replace(qsl("&amp;"), qsl("&"));

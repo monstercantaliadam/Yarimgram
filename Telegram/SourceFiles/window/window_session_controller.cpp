@@ -1671,7 +1671,7 @@ SessionController::SessionController(
 			toggleFiltersMenu(!isHorizontal);
 		} else {
 			content()->toggleFiltersMenu(false);
-			toggleFiltersMenu(false);
+			toggleFiltersMenu(enoughSpaceForFilters());
 		}
 	};
 	rpl::merge(

@@ -360,7 +360,19 @@ void FiltersMenu::refresh() {
 	const auto &settings = AyuSettings::getInstance();
 
 	const auto filters = &_session->session().data().chatsFilters();
-	if (!filters->has() || _ignoreRefresh) {
+	if (_ignoreRefresh || !filters->loaded()) {
+		return;
+	}
+	if (!filters->has()) {
+		if (!_list) {
+			setupList();
+		}
+		_reorder->cancel();
+		_filters.clear();
+		_filters.emplace(
+			FilterId(0),
+			prepareButton(_list, 0, {}, Ui::FilterIcon::All));
+		_container->resizeToWidth(_outer.width());
 		return;
 	}
 	const auto oldTop = _scroll.scrollTop();

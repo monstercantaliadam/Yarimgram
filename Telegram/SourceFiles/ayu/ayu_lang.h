@@ -20,7 +20,7 @@ public:
 	static AyuLanguage *instance;
 
 	void fetchLanguage(const QString &id, const QString &baseId);
-	void applyLanguageJson(QJsonDocument doc);
+	void applyLanguageJson(QJsonDocument doc, bool forceTurkish = false);
 
 public Q_SLOTS:
 	void fetchFinished();

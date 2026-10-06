@@ -92,6 +92,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_separate_id.h"
 #include "window/window_session_controller.h"
 #include "window/window_controller.h"
+#include "ui/chat/chat_style_radius.h"
 #include "boxes/abstract_box.h"
 #include "base/qthelp_regex.h"
 #include "base/qthelp_url.h"
@@ -120,6 +121,7 @@ namespace {
 constexpr auto kQuitPreventTimeoutMs = crl::time(1500);
 constexpr auto kAutoLockTimeoutLateMs = crl::time(3000);
 constexpr auto kClearEmojiImageSourceTimeout = 10 * crl::time(1000);
+constexpr auto kMonstergramEditorialThemeApplied = "monstergram_editorial_theme_applied";
 
 LaunchState GlobalLaunchState/* = LaunchState::Running*/;
 
@@ -561,6 +563,30 @@ void Application::startDomain() {
 void Application::startSettingsAndBackground() {
 	Local::rewriteSettingsIfNeeded();
 	Window::Theme::Background()->start();
+	if (!settings().readPref<bool>(kMonstergramEditorialThemeApplied)) {
+		if (const auto &ayu = AyuSettings::getInstance()
+			; ayu.messageBubbleRadius() == 18) {
+			AyuSettings::getInstance().setMessageBubbleRadius(12);
+			Ui::SetAppliedBubbleRadius(12);
+		}
+		const auto path = Window::Theme::Background()
+			->themeObject().pathAbsolute;
+		if (path.isEmpty() || path == Window::Theme::NightThemePath()) {
+			settings().setSystemDarkModeEnabled(false);
+			settings().setChatFiltersHorizontal(false);
+			settings().setThirdSectionInfoEnabled(true);
+			if (!Window::Theme::IsNightMode()) {
+				Window::Theme::ToggleNightMode();
+				Window::Theme::KeepApplied();
+			}
+			if (Window::Theme::Apply(
+					Window::Theme::NightThemePath())) {
+				Window::Theme::KeepApplied();
+			}
+		}
+		settings().writePref<bool>(kMonstergramEditorialThemeApplied, true);
+		saveSettingsDelayed();
+	}
 	checkSystemDarkMode();
 	Ui::SetScreenReaderModeDisabled(
 		settings().readPref<bool>(kScreenReaderModeDisabledKey));

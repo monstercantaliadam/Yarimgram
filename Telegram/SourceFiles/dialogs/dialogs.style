@@ -88,21 +88,23 @@ dialogsTextStyle: defaultTextStyle;
 dialogsDateFont: font(13px);
 dialogsDateSkip: 5px;
 
-dialogsRowHeight: 62px;
+dialogsRowHeight: 68px;
+dialogsRowInset: 4px;
+dialogsRowRadius: 8px;
 dialogsFilterPadding: point(7px, 7px);
 dialogsFilterSkip: 4px;
 
 defaultDialogRow: DialogRow {
 	height: dialogsRowHeight;
-	padding: margins(10px, 8px, 10px, 8px);
+	padding: margins(12px, 11px, 12px, 9px);
 	photoSize: 46px;
-	nameLeft: 68px;
-	nameTop: 10px;
-	textLeft: 68px;
-	textTop: 34px;
+	nameLeft: 72px;
+	nameTop: 12px;
+	textLeft: 72px;
+	textTop: 36px;
 }
 communityRequestableListItem: PeerListItem(defaultPeerListItem) {
-	height: dialogsRowHeight;            // == st::defaultDialogRow.height (62px)
+	height: dialogsRowHeight;            // == st::defaultDialogRow.height (68px)
 	photoSize: 46px;                     // == st::defaultDialogRow.photoSize
 	photoPosition: point(10px, 8px);     // == st::defaultDialogRow.padding left/top (10,8)
 	namePosition: point(68px, 10px);     // == st::defaultDialogRow.nameLeft / nameTop

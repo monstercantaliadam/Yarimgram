@@ -265,14 +265,14 @@ std::vector<EmbeddedScheme> EmbeddedThemes() {
 		},
 		EmbeddedScheme{
 			EmbeddedType::Night,
-			qColor("485761"),
-			qColor("5ca7d4"),
-			qColor("6b808d"),
-			qColor("6b808d"),
-			qColor("5ca7d4"),
-			name(tr::lng_settings_theme_tinted),
+			qColor("111b20"),
+			qColor("43d1c9"),
+			qColor("152126"),
+			qColor("223035"),
+			qColor("0c5b5c"),
+			rpl::single(u"Monstergram"_q),
 			":/gui/night.tdesktop-theme",
-			qColor("5288c1")
+			qColor("43d1c9")
 		},
 		EmbeddedScheme{
 			EmbeddedType::NightGreen,

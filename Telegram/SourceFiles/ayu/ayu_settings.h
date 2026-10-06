@@ -670,7 +670,7 @@ private:
 	rpl::variable<bool> _showOnlyAddedEmojisAndStickers = false;
 	rpl::variable<bool> _collapseSimilarChannels = true;
 	rpl::variable<bool> _hideSimilarChannels = false;
-	rpl::variable<int> _messageBubbleRadius = 18;
+	rpl::variable<int> _messageBubbleRadius = 12;
 	rpl::variable<bool> _disableOpenLinkWarning = false;
 	rpl::variable<double> _wideMultiplier = 1.0;
 	rpl::variable<bool> _spoofWebviewAsAndroid = false;

@@ -365,7 +365,7 @@ infoLayerTopBar: InfoTopBar(infoTopBar) {
 infoLayerTopBarMenuPosition: point(48px, 37px);
 
 
-infoProfileTopBarHeightMax: 180px + infoLayerTopBarHeight;
+infoProfileTopBarHeightMax: 224px + infoLayerTopBarHeight;
 
 infoProfileBirthdayConfettiSize: 360px;
 infoProfileBirthdayDigitSize: 64px;
@@ -692,6 +692,7 @@ infoMediaSkip: 2px;
 infoMediaLeft: 3px;
 infoMediaMargin: margins(0px, 6px, 0px, 2px);
 infoMediaMinGridSize: 82px;
+monstergramMediaPreviewHeight: 190px;
 infoMediaSkeletonMinHeight: 240px;
 infoMediaSkeletonRowHeight: 64px;
 infoMediaSkeletonRowPadding: 12px;
@@ -1351,3 +1352,10 @@ memberTagPillPadding: margins(5px, -1px, 5px, 0px);
 
 infoSecurityRiskIconSize: 16px;
 infoSecurityRiskIconMargin: margins(0px, 2px, 0px, 0px);
+
+monstergramProfileActionSize: 72px;
+monstergramProfileActionCircle: 42px;
+monstergramProfileActionTextTop: 48px;
+monstergramProfileActionFont: font(11px);
+
+monstergramMediaHeadingRight: 16px;

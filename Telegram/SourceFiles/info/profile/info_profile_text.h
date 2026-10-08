@@ -39,7 +39,8 @@ TextWithLabel CreateTextWithLabel(
 	const style::FlatLabel &labelSt,
 	const style::FlatLabel &textSt,
 	const style::margins &padding,
-	const style::PopupMenu &stMenu = st::defaultPopupMenu);
+	const style::PopupMenu &stMenu = st::defaultPopupMenu,
+	bool card = false);
 
 } // namespace Profile
 } // namespace Info

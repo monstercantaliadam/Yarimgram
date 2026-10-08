@@ -149,6 +149,7 @@ public:
 
 	[[nodiscard]] FilterId filterId() const;
 	void switchToFilter(FilterId filterId);
+	void setMonstergramCategory(int category);
 
 	void clearSelection();
 
@@ -643,6 +644,10 @@ private:
 	const not_null<Window::SessionController*> _controller;
 
 	not_null<IndexedList*> _shownList;
+	std::unique_ptr<IndexedList> _categoryList;
+	FilterId _categoryFilterId = 0;
+	int _monstergramCategory = 0;
+	bool _categoryRefreshPending = false;
 	FilterId _filterId = 0;
 	bool _mouseSelection = false;
 	std::optional<QPoint> _lastMousePosition;

@@ -88,8 +88,26 @@ dialogsTextStyle: defaultTextStyle;
 dialogsDateFont: font(13px);
 dialogsDateSkip: 5px;
 
+monstergramHeaderHeight: 82px;
+monstergramHeaderPadding: 16px;
+monstergramTitleTop: 8px;
+monstergramCategoriesTop: 46px;
+monstergramCategoryHeight: 28px;
+monstergramCategoryRadius: 14px;
+monstergramChatsTitle: FlatLabel(defaultFlatLabel) {
+	style: TextStyle(defaultTextStyle) {
+		font: font(20px semibold);
+	}
+	textFg: windowBoldFg;
+}
+monstergramCompose: IconButton(defaultIconButton) {
+	width: 40px;
+	height: 40px;
+	icon: icon{{ "menu/edit", windowSubTextFg }};
+	iconOver: icon{{ "menu/edit", windowBoldFg }};
+}
 dialogsRowHeight: 68px;
-dialogsRowInset: 4px;
+dialogsRowInset: 0px;
 dialogsRowRadius: 8px;
 dialogsFilterPadding: point(7px, 7px);
 dialogsFilterSkip: 4px;
@@ -329,7 +347,7 @@ dialogsFilter: InputField(defaultInputField) {
 
 	border: 3px;
 	borderActive: 2px;
-	borderRadius: 18px;
+	borderRadius: 12px;
 	borderDenominator: 2;
 
 	style: defaultTextStyle;

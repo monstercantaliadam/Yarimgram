@@ -9209,3 +9209,22 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_AboutText1" = "ToS breaking Telegram client based on {api_link}.";
 "ayu_UpdateAyuGram" = "Update Monstergram";
 "ayu_UtilityRestartRequired" = "The app will close in 5 seconds.";
+
+"ayu_Navigation" = "Navigation";
+"ayu_Chats" = "Chats";
+"ayu_Contacts" = "Contacts";
+"ayu_Calls" = "Calls";
+"ayu_Saved" = "Saved";
+"ayu_Settings" = "Settings";
+"ayu_CategoryAll" = "All";
+"ayu_CategoryPrivate" = "Personal";
+"ayu_CategoryGroups" = "Groups";
+"ayu_CategoryChannels" = "Channels";
+"ayu_CategoryBots" = "Bots";
+
+"ayu_VoiceCall" = "Voice Call";
+"ayu_VideoCall" = "Video Call";
+"ayu_Notifications" = "Notifications";
+"ayu_More" = "More";
+"ayu_SharedMedia" = "Shared Media";
+"ayu_ViewAll" = "View All";

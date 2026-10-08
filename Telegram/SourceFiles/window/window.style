@@ -226,11 +226,12 @@ createThemeLink: InputField(defaultInputField) {
 	heightMin: 34px;
 }
 
-windowFiltersWidth: 72px;
+windowFiltersWidth: 88px;
+monstergramLogo: icon{{ "monstergram/logo", sideBarIconFgActive }};
 windowFiltersButton: SideBarButton(defaultSideBarButton) {
-	textTop: 40px;
+	textTop: 44px;
 	textSkip: 6px;
-	minHeight: 62px;
+	minHeight: 76px;
 	minTextWidth: 48px;
 	style: TextStyle(defaultTextStyle) {
 		font: font(11px semibold);
@@ -254,9 +255,10 @@ windowFiltersButtonIconsOnly: SideBarButton(windowFiltersButton) {
 	minHeight: 54px;
 }
 windowFiltersMainMenu: SideBarButton(windowFiltersButton) {
-	icon: icon {{ "dialogs/dialogs_menu", sideBarIconFg }};
-	iconPosition: point(-1px, -1px);
-	minHeight: 54px;
+	icon: monstergramLogo;
+	iconPosition: point(-1px, 18px);
+	textTop: 58px;
+	minHeight: 88px;
 }
 windowFiltersMainMenuUnread: icon {
 	{ "dialogs/dialogs_menu_unread", sideBarIconFg },
@@ -408,3 +410,11 @@ macCautionIconSize: 16;
 macWindowRoundRadius: 10;
 macWindowShadowTopLeft: icon {{ "mac_window_shadow_top_left", windowShadowFg }};
 macTrayIcon: icon {{ "mac_tray_icon", windowFg }};
+
+monstergramNavigationInset: margins(4px, 4px, 4px, 4px);
+monstergramNavigationRadius: 10px;
+monstergramNavigationIndicator: 3px;
+monstergramNavigationIconTop: 12px;
+monstergramNavigationIconHeight: 28px;
+monstergramLogoTop: 16px;
+monstergramLogoHeight: 32px;

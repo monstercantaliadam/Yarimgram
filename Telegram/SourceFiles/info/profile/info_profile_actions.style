@@ -67,3 +67,25 @@ infoHoursOuter: RoundButton(defaultActiveButton) {
 infoHoursOuterMargin: margins(8px, 4px, 8px, 4px);
 infoHoursDaySkip: 6px;
 infoHoursArrowSize: 4px;
+
+monstergramNoteInset: margins(16px, 10px, 16px, 8px);
+monstergramNoteRadius: 12px;
+monstergramNoteTitlePadding: margins(30px, 24px, 52px, 8px);
+monstergramNoteTextPadding: margins(30px, 0px, 30px, 24px);
+monstergramNoteTitle: FlatLabel(defaultFlatLabel) {
+	style: semiboldTextStyle;
+	textFg: windowBoldFg;
+}
+monstergramNoteText: FlatLabel(defaultFlatLabel) {
+	textFg: windowSubTextFg;
+}
+monstergramNoteEdit: IconButton(defaultIconButton) {
+	width: 40px;
+	height: 40px;
+	icon: icon{{ "menu/edit", windowSubTextFg }};
+	iconOver: icon{{ "menu/edit", windowBoldFg }};
+}
+
+monstergramInfoInset: margins(16px, 4px, 16px, 4px);
+monstergramInfoLabelPadding: margins(14px, 12px, 14px, 0px);
+monstergramInfoTextPadding: margins(14px, 0px, 14px, 12px);

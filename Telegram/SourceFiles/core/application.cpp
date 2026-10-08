@@ -12,6 +12,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_forum.h"
 #include "data/data_message_reactions.h"
 #include "data/data_session.h"
+#include "data/data_wall_paper.h"
 #include "data/data_download_manager.h"
 #include "base/battery_saving.h"
 #include "base/event_filter.h"
@@ -93,6 +94,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "window/window_session_controller.h"
 #include "window/window_controller.h"
 #include "ui/chat/chat_style_radius.h"
+#include "styles/style_window.h"
 #include "boxes/abstract_box.h"
 #include "base/qthelp_regex.h"
 #include "base/qthelp_url.h"
@@ -121,7 +123,7 @@ namespace {
 constexpr auto kQuitPreventTimeoutMs = crl::time(1500);
 constexpr auto kAutoLockTimeoutLateMs = crl::time(3000);
 constexpr auto kClearEmojiImageSourceTimeout = 10 * crl::time(1000);
-constexpr auto kMonstergramEditorialThemeApplied = "monstergram_editorial_theme_applied";
+constexpr auto kMonstergramEditorialThemeApplied = "monstergram_editorial_theme_applied_v2";
 
 LaunchState GlobalLaunchState/* = LaunchState::Running*/;
 
@@ -575,6 +577,8 @@ void Application::startSettingsAndBackground() {
 			settings().setSystemDarkModeEnabled(false);
 			settings().setChatFiltersHorizontal(false);
 			settings().setThirdSectionInfoEnabled(true);
+			settings().setThirdColumnWidth(st::columnMinimalWidthThird);
+			settings().updateDialogsWidthRatio(0.34, false);
 			if (!Window::Theme::IsNightMode()) {
 				Window::Theme::ToggleNightMode();
 				Window::Theme::KeepApplied();
@@ -582,6 +586,10 @@ void Application::startSettingsAndBackground() {
 			if (Window::Theme::Apply(
 					Window::Theme::NightThemePath())) {
 				Window::Theme::KeepApplied();
+				Window::Theme::Background()->set(Data::DefaultWallPaper()
+					.withBackgroundColors({ st::windowBg->c })
+					.withPatternIntensity(6));
+				Window::Theme::Background()->setTile(true);
 			}
 		}
 		settings().writePref<bool>(kMonstergramEditorialThemeApplied, true);

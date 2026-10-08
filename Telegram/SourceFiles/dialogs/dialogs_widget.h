@@ -333,6 +333,8 @@ private:
 	std::unique_ptr<Ui::AbstractButton> _frozenAccountBar;
 
 	object_ptr<Ui::RpWidget> _searchControls;
+	base::unique_qptr<Ui::RpWidget> _monstergramHeader;
+	int _monstergramCategory = 0;
 	object_ptr<HistoryView::TopBarWidget> _subsectionTopBar = { nullptr };
 	struct {
 		object_ptr<Ui::IconButton> toggle;

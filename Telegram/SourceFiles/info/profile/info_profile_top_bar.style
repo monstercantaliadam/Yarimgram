@@ -53,12 +53,12 @@ infoLayerTopBarBlackEdit: IconButton(infoLayerTopBarEdit) {
 	iconOver: icon {{ "menu/edit", windowBoldFg }};
 	ripple: universalRippleAnimation;
 }
-infoProfileTopBarTitleTop: 113px;
-infoProfileTopBarStatusTop: 134px;
+infoProfileTopBarTitleTop: 136px;
+infoProfileTopBarStatusTop: 160px;
 infoProfileTopBarPhotoTop: 24px;
 infoProfileTopBarPhotoBgShift: 55px;
 infoProfileTopBarPhotoBgNoActionsShift: 30px;
-infoProfileTopBarPhotoSize: 80px;
+infoProfileTopBarPhotoSize: 96px;
 infoProfileTopBarLastSeenSkip: point(8px, 1px);
 infoProfileTopBarGiftSize: 20px;
 infoProfileTopBarGiftLeft: point(15px, 13px);
@@ -115,3 +115,6 @@ infoColoredPeerBadge: InfoPeerBadge(infoPeerBadge) {
 infoColoredBotVerifyBadge: InfoPeerBadge(infoColoredPeerBadge) {
 	position: point(-2px, 2px);
 }
+
+monstergramProfileLeft: 22px;
+monstergramProfileVideo: icon{{ "calls/video_tooltip", windowBoldFg }};

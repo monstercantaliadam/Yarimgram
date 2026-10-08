@@ -11,6 +11,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <rpl/filter.h>
 #include <rpl/after_next.h>
 #include "ui/widgets/labels.h"
+#include "ui/painter.h"
+#include "styles/style_info_profile_actions.h"
 #include "ui/wrap/slide_wrap.h"
 #include "ui/wrap/vertical_layout.h"
 #include "styles/style_boxes.h"
@@ -26,7 +28,8 @@ TextWithLabel CreateTextWithLabel(
 		const style::FlatLabel &labelSt,
 		const style::FlatLabel &textSt,
 		const style::margins &padding,
-		const style::PopupMenu &stMenu) {
+		const style::PopupMenu &stMenu,
+		bool card) {
 	auto result = object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
 		parent,
 		object_ptr<Ui::VerticalLayout>(parent),
@@ -50,9 +53,13 @@ TextWithLabel CreateTextWithLabel(
 		layout,
 		std::move(nonEmptyText),
 		textSt,
-		stMenu));
+		stMenu), card ? st::monstergramInfoTextPadding : style::margins());
 	std::move(text) | rpl::on_next([=] {
-		labeled->resizeToWidth(layout->widthNoMargins());
+		labeled->resizeToWidth(layout->widthNoMargins()
+			- (card
+				? st::monstergramInfoTextPadding.left()
+					+ st::monstergramInfoTextPadding.right()
+				: 0));
 	}, labeled->lifetime());
 	labeled->setSelectable(true);
 	layout->add(Ui::CreateSkipWidget(layout, st::infoLabelSkip));
@@ -63,7 +70,19 @@ TextWithLabel CreateTextWithLabel(
 		) | rpl::after_next([=] {
 			layout->resizeToWidth(layout->widthNoMargins());
 		}),
-		labelSt));
+		labelSt), card ? st::monstergramInfoLabelPadding : style::margins());
+	if (card) {
+		layout->reorderRows(2, 0);
+		layout->reorderRows(2, 1);
+		layout->paintRequest() | rpl::on_next([=] {
+			auto p = QPainter(layout);
+			auto hq = PainterHighQualityEnabler(p);
+			p.setPen(Qt::NoPen);
+			p.setBrush(st::windowBgOver);
+			p.drawRoundedRect(layout->rect(),
+				st::monstergramNoteRadius, st::monstergramNoteRadius);
+		}, layout->lifetime());
+	}
 	result->finishAnimating();
 	return { std::move(result), labeled, subtext };
 }

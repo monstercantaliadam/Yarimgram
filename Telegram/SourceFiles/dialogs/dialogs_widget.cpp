@@ -31,8 +31,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "boxes/peers/community_pending_requests_box.h"
 #include "boxes/peers/edit_peer_requests_box.h"
 #include "boxes/choose_filter_box.h"
+#include "boxes/peer_list_controllers.h"
 #include "ui/text/text_utilities.h"
 #include "ui/widgets/buttons.h"
+#include "ui/widgets/labels.h"
 #include "ui/widgets/chat_filters_tabs_strip.h"
 #include "ui/widgets/elastic_scroll.h"
 #include "ui/widgets/fields/input_field.h"
@@ -101,7 +103,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "styles/style_dialogs_widget.h"
 #include "styles/style_info.h"
 #include "styles/style_window.h"
+#include "styles/style_menu_icons.h"
 #include "base/qt/qt_common_adapters.h"
+
+#include <array>
 
 #include <QtCore/QMimeData>
 #include <QtGui/QTextBlock>
@@ -863,10 +868,80 @@ Widget::Widget(
 		setupDownloadBar();
 	}
 	setupSwipeBack();
+	if (_layout == Layout::Main
+		&& controller->windowId().type == Window::SeparateType::Primary) {
+		_monstergramHeader = base::make_unique_q<Ui::RpWidget>(this);
+		const auto header = _monstergramHeader.get();
+		const auto title = Ui::CreateChild<Ui::FlatLabel>(
+			header,
+			tr::ayu_Chats(),
+			st::monstergramChatsTitle);
+		title->moveToLeft(st::monstergramHeaderPadding, st::monstergramTitleTop);
+		title->show();
+		const auto compose = Ui::CreateChild<Ui::IconButton>(
+			header,
+			st::monstergramCompose);
+		compose->setAccessibleName(tr::lng_menu_contacts(tr::now));
+		compose->setClickedCallback([=] {
+			controller->show(PrepareContactsBox(controller));
+		});
+		compose->show();
+		const auto labels = std::array{
+			tr::ayu_CategoryAll(tr::now),
+			tr::ayu_CategoryPrivate(tr::now),
+			tr::ayu_CategoryGroups(tr::now),
+			tr::ayu_CategoryChannels(tr::now),
+			tr::ayu_CategoryBots(tr::now),
+		};
+		auto buttons = std::vector<not_null<Ui::AbstractButton*>>();
+		for (auto i = 0; i != labels.size(); ++i) {
+			const auto button = Ui::CreateChild<Ui::AbstractButton>(header);
+			const auto label = labels[i];
+			button->setAccessibleName(label);
+			button->setPointerCursor(true);
+			button->paintRequest() | rpl::on_next([=] {
+				auto p = QPainter(button);
+				auto hq = PainterHighQualityEnabler(p);
+				const auto active = (_monstergramCategory == i);
+				p.setPen(Qt::NoPen);
+				if (active || button->isOver()) {
+					p.setBrush(active ? st::activeButtonBg : st::windowBgOver);
+					p.drawRoundedRect(
+						button->rect(),
+						st::monstergramCategoryRadius,
+						st::monstergramCategoryRadius);
+				}
+				p.setFont(st::normalFont);
+				p.setPen(active ? st::activeButtonFg : st::windowSubTextFg);
+				p.drawText(button->rect(), Qt::AlignCenter, label);
+			}, button->lifetime());
+			button->setClickedCallback([=] {
+				_monstergramCategory = i;
+				_inner->setMonstergramCategory(i);
+				header->update();
+				for (const auto child : header->findChildren<QWidget*>()) {
+					child->update();
+				}
+			});
+			button->show();
+			buttons.push_back(button);
+		}
+		header->widthValue() | rpl::on_next([=](int width) {
+			compose->moveToRight(st::monstergramHeaderPadding, 0);
+			const auto available = width - 2 * st::monstergramHeaderPadding;
+			const auto tabWidth = available / int(buttons.size());
+			for (auto i = 0; i != buttons.size(); ++i) {
+				buttons[i]->setGeometry(
+					st::monstergramHeaderPadding + i * tabWidth,
+					st::monstergramCategoriesTop,
+					tabWidth,
+					st::monstergramCategoryHeight);
+			}
+		}, header->lifetime());
+	}
 
 	if (session().settings().dialogsFiltersEnabled()
-		&& (Core::App().settings().chatFiltersHorizontal()
-			|| !controller->enoughSpaceForFilters())) {
+		&& session().data().chatsFilters().has()) {
 		toggleFiltersMenu(true);
 	}
 
@@ -4708,6 +4783,25 @@ void Widget::updateControlsGeometry() {
 	_chooseFromUser->moveToLeft(right, _search->y());
 
 	const auto barw = width();
+	const auto showMonstergramHeader = _monstergramHeader
+		&& !_openedForum
+		&& !_openedFolder
+		&& !_openedCommunity
+		&& !_suggestions
+		&& _searchState.query.isEmpty()
+		&& !searchInPeer()
+		&& narrowRatio == 0.;
+	const auto headerHeight = showMonstergramHeader
+		? st::monstergramHeaderHeight
+		: 0;
+	if (_monstergramHeader) {
+		_monstergramHeader->setVisible(showMonstergramHeader);
+		_monstergramHeader->setGeometry(
+			0,
+			filterAreaTop + filterAreaHeight,
+			barw,
+			st::monstergramHeaderHeight);
+	}
 	const auto expandedStoriesTop = filterAreaTop + filterAreaHeight;
 	const auto storiesHeight = 2 * st::dialogsStories.photoTop
 		+ st::dialogsStories.photo;
@@ -4780,8 +4874,11 @@ void Widget::updateControlsGeometry() {
 		_frozenAccountBar->resize(barw, _frozenAccountBar->height());
 	}
 	_updateScrollGeometryCached = [=] {
-		const auto frozenBarTop = expandedStoriesTop
+		const auto frozenBarTop = expandedStoriesTop + headerHeight
 			+ ((!_stories || _stories->isHidden()) ? 0 : _aboveScrollAdded);
+		if (_monstergramHeader && showMonstergramHeader) {
+			_monstergramHeader->move(0, frozenBarTop - headerHeight);
+		}
 		if (_frozenAccountBar) {
 			_frozenAccountBar->move(0, frozenBarTop);
 		}

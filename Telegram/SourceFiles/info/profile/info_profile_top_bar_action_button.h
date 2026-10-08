@@ -41,6 +41,8 @@ public:
 	void toggle(bool state);
 	void finishAnimating();
 	void setText(const QString &text);
+	void setCircular(bool circular);
+	[[nodiscard]] bool circular() const { return _circular; }
 	void setStyle(const TopBarActionButtonStyle &style);
 
 	~TopBarActionButton();
@@ -59,6 +61,7 @@ private:
 	std::unique_ptr<Lottie::Icon> _lottie;
 	const style::icon *_icon = nullptr;
 
+	bool _circular = false;
 	bool _isToggle = false;
 	bool _toggleState = false;
 	const style::icon *_offIcon = nullptr;

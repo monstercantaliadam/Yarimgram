@@ -860,6 +860,7 @@ void TopBar::updateCollectibleStatus() {
 
 void TopBar::finalizeActions(
 		const std::vector<not_null<TopBarActionButton*>> &buttons) {
+	const auto circular = !buttons.empty() && buttons.front()->circular();
 	_actionsShadow = base::make_unique_q<Ui::RpWidget>(this);
 	const auto shadowRaw = _actionsShadow.get();
 	shadowRaw->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -870,7 +871,7 @@ void TopBar::finalizeActions(
 	const auto extend = Ui::BoxShadow::ExtendFor(
 		st::infoProfileTopBarActionButtonShadow);
 	shadowRaw->paintRequest() | rpl::on_next([=] {
-		if (!*shadowShown) {
+		if (!*shadowShown || circular) {
 			return;
 		}
 		const auto full = st::infoProfileTopBarActionButtonSize;
@@ -911,7 +912,9 @@ void TopBar::finalizeActions(
 		const auto ratio = float64(size.height())
 			/ (st::infoProfileTopBarActionButtonsHeight
 				+ st::infoLayerTopBarHeight);
-		const auto h = st::infoProfileTopBarActionButtonSize;
+		const auto h = circular
+			? st::monstergramProfileActionSize
+			: st::infoProfileTopBarActionButtonSize;
 		const auto resultHeight = (ratio >= 1.)
 			? h
 			: (ratio <= 0.5)
@@ -1021,6 +1024,47 @@ void TopBar::setupActions(not_null<Window::SessionController*> controller) {
 		addMore();
 		finalizeActions(buttons);
 	});
+	if (isSide && user && !user->isSelf() && !user->isBot()) {
+		const auto add = [&](QString text, const style::icon &icon, Fn<void()> click) {
+			const auto button = Ui::CreateChild<TopBarActionButton>(this, text, icon);
+			button->setAccessibleName(text);
+			button->setCircular(true);
+			button->setClickedCallback(std::move(click));
+			buttons.push_back(button);
+			_actions->add(button);
+			return button;
+		};
+		const auto call = add(
+			tr::ayu_VoiceCall(tr::now),
+			st::infoProfileTopBarActionCall,
+			[=] { Core::App().calls().startOutgoingCall(user, {}); });
+		const auto video = add(
+			tr::ayu_VideoCall(tr::now),
+			st::monstergramProfileVideo,
+			[=] { Core::App().calls().startOutgoingCall(user, { .video = true }); });
+		const auto unavailable = user->isInaccessible()
+			|| user->callsStatus() == UserData::CallsStatus::Disabled;
+		call->setDisabled(unavailable);
+		video->setDisabled(unavailable);
+		const auto notifications = add(
+			tr::ayu_Notifications(tr::now),
+			st::infoProfileTopBarActionMute,
+			[=] { MuteMenu::ToggleMuteForever(peer->owner().history(peer)); });
+		notifications->convertToToggle(
+			st::infoProfileTopBarActionUnmute,
+			st::infoProfileTopBarActionMute,
+			u"profile_muting"_q,
+			u"profile_unmuting"_q);
+		NotificationsEnabledValue(peer) | rpl::on_next([=](bool enabled) {
+			notifications->toggle(enabled);
+			notifications->finishAnimating();
+		}, notifications->lifetime());
+		add(
+			tr::ayu_More(tr::now),
+			st::infoProfileTopBarActionMore,
+			[=] { showTopBarMenu(controller, false); });
+		return;
+	}
 	if (user) {
 		const auto message = Ui::CreateChild<TopBarActionButton>(
 			this,
@@ -2045,7 +2089,9 @@ void TopBar::updateTitlePosition(float64 progressCurrent) {
 
 	auto titleLeft = anim::interpolate(
 		titleMostLeft,
-		(width() - totalElementsWidth) / 2,
+		(_wrap.current() == Wrap::Side)
+			? st::monstergramProfileLeft
+			: (width() - totalElementsWidth) / 2,
 		progressCurrent);
 
 	if (_botVerify) {
@@ -2129,7 +2175,9 @@ void TopBar::updateStatusPosition(float64 progressCurrent) {
 		+ (_showLastSeen->toggled() ? _showLastSeen->width() : 0);
 	const auto statusLeft = anim::interpolate(
 		statusMostLeft(),
-		(width() - totalElementsWidth) / 2,
+		(_wrap.current() == Wrap::Side)
+			? st::monstergramProfileLeft
+			: (width() - totalElementsWidth) / 2,
 		progressCurrent);
 
 	if (const auto rating = _starsRating.get()) {
@@ -2778,7 +2826,9 @@ QRect TopBar::userpicGeometry() const {
 	const auto fullSize = st::infoProfileTopBarPhotoSize;
 	const auto minSize = fullSize * kMinScale;
 	const auto size = anim::interpolate(minSize, fullSize, progressCurrent);
-	const auto x = (width() - size) / 2;
+	const auto x = (_wrap.current() == Wrap::Side)
+		? st::monstergramProfileLeft
+		: (width() - size) / 2;
 	const auto minY = -minSize;
 	const auto maxY = st::infoProfileTopBarPhotoTop;
 	const auto y = anim::interpolate(minY, maxY, progressCurrent);

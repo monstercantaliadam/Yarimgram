@@ -21,7 +21,10 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_chat_section.h"
 #include "info/info_controller.h"
 #include "info/info_memento.h"
+#include "info/info_wrap_widget.h"
 #include "info/media/info_media_buttons.h"
+#include "info/media/info_media_list_widget.h"
+#include "info/profile/tabs/adapters/info_profile_tab_sub_controller.h"
 #include "info/peer_gifts/info_peer_gifts_widget.h"
 #include "info/profile/info_profile_icon.h"
 #include "info/profile/info_profile_values.h"
@@ -40,6 +43,47 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Info::Profile {
 namespace {
+
+class MonstergramMediaPreview final : public Ui::RpWidget {
+public:
+	MonstergramMediaPreview(
+		QWidget *parent,
+		not_null<Controller*> controller,
+		PeerData *migrated)
+	: RpWidget(parent)
+	, _controller(controller, Media::Type::PhotoVideo, migrated, false)
+	, _list(base::make_unique_q<Media::ListWidget>(this, &_controller)) {
+		_list->setSelectedLimit(0);
+		_list->show();
+		_list->heightValue() | rpl::on_next([=] {
+			if (!_resizing) {
+				resizeToWidth(width());
+			}
+		}, lifetime());
+	}
+
+protected:
+	int resizeGetHeight(int newWidth) override {
+		if (newWidth <= 0) {
+			return 0;
+		}
+		_resizing = true;
+		_list->resizeToWidth(newWidth);
+		const auto height = std::min(
+			_list->height(),
+			st::monstergramMediaPreviewHeight);
+		_list->setExternalViewportHeight(height);
+		_list->setVisibleTopBottom(0, height);
+		_resizing = false;
+		return height;
+	}
+
+private:
+	MediaSubController _controller;
+	base::unique_qptr<Media::ListWidget> _list;
+	bool _resizing = false;
+
+};
 
 [[nodiscard]] not_null<Ui::SettingsButton*> AddCommonGroupsButton(
 		Ui::VerticalLayout *parent,
@@ -258,6 +302,33 @@ object_ptr<Ui::SlideWrap<Ui::RpWidget>> SetupSharedMediaClassic(
 
 	const auto peer = sublist ? sublist->sublistPeer() : profilePeer;
 	auto content = object_ptr<Ui::VerticalLayout>(parent);
+	if (controller->wrap() == Wrap::Side) {
+		const auto heading = content->add(object_ptr<Ui::SettingsButton>(
+			content,
+			tr::ayu_SharedMedia(),
+			st::infoSharedMediaButton));
+		const auto viewAll = Ui::CreateChild<Ui::LinkButton>(
+			heading, tr::ayu_ViewAll(tr::now));
+		viewAll->show();
+		heading->widthValue() | rpl::on_next([=] {
+			viewAll->moveToRight(st::monstergramMediaHeadingRight,
+				(heading->height() - viewAll->height()) / 2);
+		}, viewAll->lifetime());
+		const auto openMedia = [=] {
+			const auto section = Info::Section(Media::Type::PhotoVideo);
+			controller->showSection(topic
+				? std::make_shared<Info::Memento>(topic, section)
+				: sublist
+				? std::make_shared<Info::Memento>(sublist, section)
+				: std::make_shared<Info::Memento>(peer, section));
+		};
+		heading->setClickedCallback(openMedia);
+		viewAll->setClickedCallback(openMedia);
+		content->add(object_ptr<MonstergramMediaPreview>(
+			content,
+			controller,
+			migrated));
+	}
 	const auto addMediaButton = [&](
 			MediaType type,
 			const style::icon &icon) {

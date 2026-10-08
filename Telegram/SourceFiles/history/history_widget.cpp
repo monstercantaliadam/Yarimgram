@@ -7627,8 +7627,9 @@ void HistoryWidget::moveFieldControls() {
 // (_attachDocument|_attachPhoto) _field (_ttlInfo) (_scheduled) (_giftToUser) (_silent|_cmdStart|_kbShow) (_toggleSuggestPost) (_kbHide|_tabbedSelectorToggle) _send
 // (_botStart|_unblock|_joinChannel|_muteUnmute|_reportMessages)
 
+	bottom -= _field->isHidden() ? 0 : st::monstergramComposeBottom;
 	auto buttonsBottom = bottom - _attachToggle->height();
-	auto left = st::historySendRight;
+	auto left = st::historySendRight + st::monstergramComposeInset;
 	if (_botMenu.button) {
 		const auto skip = st::historyBotMenuSkip;
 		_botMenu.button->moveToLeft(left + skip, buttonsBottom + skip);
@@ -7653,7 +7654,7 @@ void HistoryWidget::moveFieldControls() {
 			left,
 			bottom - fieldHeight() - st::historySendPadding);
 	}
-	auto right = st::historySendRight;
+	auto right = st::historySendRight + st::monstergramComposeInset;
 	_send->moveToRight(right, buttonsBottom); right += _send->width();
 	_voiceRecordBar->moveToLeft(0, bottom - _voiceRecordBar->height());
 	_tabbedSelectorToggle->moveToRight(right, buttonsBottom);
@@ -7725,7 +7726,7 @@ void HistoryWidget::updateFieldSize() {
 	const auto kbShowShown = _history && !_kbShown && _keyboard->hasMarkup();
 	auto fieldWidth = width()
 		- (settings.showAttachButtonInMessageField() ? _attachToggle->width() : 0)
-		- st::historySendRight
+		- 2 * (st::historySendRight + st::monstergramComposeInset)
 		- _send->width()
 		- (settings.showEmojiButtonInMessageField() ? _tabbedSelectorToggle->width() : 0);
 	if (_botMenu.button) {
@@ -8689,7 +8690,9 @@ void HistoryWidget::updateHistoryGeometry(
 		newScrollHeight -= _unblock->height();
 	} else {
 		if (editingMessage() || _canSendMessages) {
-			newScrollHeight -= (fieldHeight() + 2 * st::historySendPadding);
+			newScrollHeight -= fieldHeight()
+				+ 2 * st::historySendPadding
+				+ st::monstergramComposeBottom;
 		} else if (_sendRestriction) {
 			newScrollHeight -= _sendRestriction->height();
 		}
@@ -9137,6 +9140,7 @@ int HistoryWidget::computeMaxFieldHeight() const {
 			? st::historyReplyHeight
 			: 0)
 		- (2 * st::historySendPadding)
+		- st::monstergramComposeBottom
 		- st::historyReplyHeight; // at least this height for history.
 	return std::min(st::historyComposeFieldMaxHeight, available);
 }
@@ -11373,7 +11377,18 @@ void HistoryWidget::drawField(Painter &p, const QRect &rect) {
 	}
 	p.setInactive(
 		controller()->isGifPausedAtLeastFor(Window::GifPauseReason::Any));
-	p.fillRect(myrtlrect(0, backy, width(), backh), st::historyReplyBg);
+	p.fillRect(myrtlrect(0, backy, width(), backh + st::monstergramComposeBottom),
+		st::windowBg);
+	{
+		auto hq = PainterHighQualityEnabler(p);
+		p.setPen(st::windowBgOver);
+		p.setBrush(st::historyComposeAreaBg);
+		p.drawRoundedRect(myrtlrect(
+			st::monstergramComposeInset,
+			backy,
+			width() - 2 * st::monstergramComposeInset,
+			backh), st::monstergramComposeRadius, st::monstergramComposeRadius);
+	}
 
 	const auto media = (!_previewDrawPreview && drawMsgText)
 		? drawMsgText->media()

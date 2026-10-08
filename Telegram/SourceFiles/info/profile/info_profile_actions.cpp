@@ -1640,8 +1640,9 @@ Section DetailsFiller::makeInfo() {
 			std::move(text),
 			st::infoLabel,
 			textSt,
-			padding,
-			stMenu);
+			_controller->wrap() == Wrap::Side ? st::monstergramInfoInset : padding,
+			stMenu,
+			_controller->wrap() == Wrap::Side);
 		tracker.track(result->add(std::move(line.wrap)));
 
 		line.text->setClickHandlerFilter(infoClickFilter);
@@ -1804,15 +1805,6 @@ Section DetailsFiller::makeInfo() {
 			AboutWithAdvancedValue(user));
 		setupAboutContextMenu(about.text, AboutWithAdvancedValue(user));
 		SetupAboutPeerIdDrag(about.text, user);
-		if (!user->isSelf()) {
-			const auto accountId = user->session().userId().bare;
-			const auto peerId = user->id.value;
-			addInfoLine(
-				tr::ayu_ProfileNote(),
-				AyuSettings::getInstance().profileNoteValue(
-					accountId,
-					peerId) | rpl::map(tr::marked));
-		}
 
 		const auto usernameLine = addInfoOneLine(
 			UsernamesSubtext(_peer, tr::lng_info_username_label()),
@@ -1860,6 +1852,52 @@ Section DetailsFiller::makeInfo() {
 			return false;
 		});
 
+		if (!user->isSelf()) {
+			const auto accountId = user->session().userId().bare;
+			const auto peerId = user->id.value;
+			const auto card = result->add(object_ptr<Ui::VerticalLayout>(result));
+			card->paintRequest() | rpl::on_next([=] {
+				auto p = QPainter(card);
+				auto hq = PainterHighQualityEnabler(p);
+				p.setPen(Qt::NoPen);
+				p.setBrush(st::windowBgOver);
+				p.drawRoundedRect(
+					card->rect().marginsRemoved(st::monstergramNoteInset),
+					st::monstergramNoteRadius,
+					st::monstergramNoteRadius);
+			}, card->lifetime());
+			const auto title = card->add(object_ptr<Ui::FlatLabel>(
+				card,
+				tr::ayu_ProfileNote(),
+				st::monstergramNoteTitle), st::monstergramNoteTitlePadding);
+			const auto edit = Ui::CreateChild<Ui::IconButton>(
+				card,
+				st::monstergramNoteEdit);
+			edit->setAccessibleName(tr::ayu_ProfileNoteEdit(tr::now));
+			edit->setClickedCallback([=] {
+				controller->show(Box(EditMonstergramNoteBox, accountId, peerId));
+			});
+			edit->show();
+			card->widthValue() | rpl::on_next([=](int width) {
+				edit->moveToRight(
+					st::monstergramNoteInset.right(),
+					st::monstergramNoteInset.top());
+				title->resizeToWidth(width
+					- st::monstergramNoteTitlePadding.left()
+					- st::monstergramNoteTitlePadding.right()
+					- edit->width());
+			}, edit->lifetime());
+			const auto text = card->add(object_ptr<Ui::FlatLabel>(
+				card,
+				AyuSettings::getInstance().profileNoteValue(accountId, peerId)
+					| rpl::map([](const QString &text) {
+						return text.isEmpty()
+							? tr::ayu_ProfileNotePlaceholder(tr::now)
+							: text;
+					}),
+				st::monstergramNoteText), st::monstergramNoteTextPadding);
+			text->setSelectable(true);
+		}
 		if (!user->isBot()) {
 			tracker.track(result->add(
 				CreateBirthday(result, controller, user),

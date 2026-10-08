@@ -90,6 +90,11 @@ void TopBarActionButton::finishAnimating() {
 	}
 }
 
+void TopBarActionButton::setCircular(bool circular) {
+	_circular = circular;
+	update();
+}
+
 void TopBarActionButton::setText(const QString &text) {
 	_text = text;
 	update();
@@ -116,6 +121,31 @@ void TopBarActionButton::setStyle(const TopBarActionButtonStyle &style) {
 void TopBarActionButton::paintEvent(QPaintEvent *e) {
 	auto p = Painter(this);
 
+	if (_circular) {
+		auto hq = PainterHighQualityEnabler(p);
+		const auto diameter = st::monstergramProfileActionCircle;
+		const auto circle = QRect((width() - diameter) / 2, 0, diameter, diameter);
+		p.setOpacity(std::clamp(
+			float64(height()) / st::monstergramProfileActionSize, 0., 1.)
+			* (isDisabled() ? 0.5 : 1.));
+		p.setPen(st::windowBgOver);
+		p.setBrush(isOver() || isDown() ? st::windowBgRipple : st::windowBgOver);
+		p.drawEllipse(circle);
+		if (_icon) {
+			_icon->paintInCenter(p, circle, st::windowSubTextFg->c);
+		} else if (_lottie) {
+			_lottie->paint(p,
+				circle.x() + (diameter - st::infoProfileTopBarActionButtonLottieSize) / 2,
+				(diameter - st::infoProfileTopBarActionButtonLottieSize) / 2,
+				st::windowSubTextFg->c);
+		}
+		p.setPen(st::windowSubTextFg);
+		p.setFont(st::monstergramProfileActionFont);
+		p.drawText(QRect(0, st::monstergramProfileActionTextTop,
+			width(), st::monstergramProfileActionSize - st::monstergramProfileActionTextTop),
+			Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, _text);
+		return;
+	}
 	const auto progress = float64(height())
 		/ st::infoProfileTopBarActionButtonSize;
 	p.setOpacity(progress);

@@ -397,6 +397,9 @@ InnerWidget::InnerWidget(
 		if (_state == WidgetState::Filtered && !_filter.isEmpty()) {
 			refreshFilterResults();
 		}
+		if (_monstergramCategory) {
+			refreshShownList();
+		}
 		refresh();
 	}, lifetime());
 
@@ -2796,6 +2799,10 @@ void InnerWidget::checkReorderPinnedStart(QPoint localPosition) {
 
 void InnerWidget::startReorderPinned(QPoint localPosition) {
 	Expects(_dragging != nullptr);
+	if (_monstergramCategory) {
+		_dragging = nullptr;
+		return;
+	}
 
 	cancelChatPreview();
 	if (updateReorderIndexGetCount() < 2) {
@@ -3409,7 +3416,27 @@ void InnerWidget::dialogRowReplaced(
 void InnerWidget::handleChatListEntryRefreshes() {
 	using Event = Data::Session::ChatListEntryRefresh;
 	session().data().chatListEntryRefreshes(
+	) | rpl::on_next([=](const Event &) {
+		if (!_monstergramCategory || _categoryRefreshPending) {
+			return;
+		}
+		_categoryRefreshPending = true;
+		Ui::PostponeCall(crl::guard(this, [=] {
+			_categoryRefreshPending = false;
+			refreshShownList();
+			refreshWithCollapsedRows();
+			refreshEmpty();
+		}));
+	}, lifetime());
+	session().data().chatListEntryRefreshes(
 	) | rpl::filter([=](const Event &event) {
+		if (_monstergramCategory
+			&& !_openedFolder
+			&& !_openedForum
+			&& !_openedCommunity
+			&& !_savedSublists) {
+			return false;
+		}
 		if (event.filterId != _filterId) {
 			return false;
 		} else if (const auto topic = event.key.topic()) {
@@ -3899,7 +3926,7 @@ void InnerWidget::updateSelectedRow(Key key) {
 }
 
 void InnerWidget::refreshShownList() {
-	const auto list = _savedSublists
+	auto list = _savedSublists
 		? _savedSublists->chatsList()->indexed()
 		: _openedForum
 		? _openedForum->topicsList()->indexed()
@@ -3908,6 +3935,43 @@ void InnerWidget::refreshShownList() {
 		: _filterId
 		? session().data().chatsFilters().chatsList(_filterId)->indexed()
 		: session().data().chatsList(_openedFolder)->indexed();
+	if (_monstergramCategory
+		&& !_savedSublists
+		&& !_openedForum
+		&& !_openedCommunity
+		&& !_openedFolder) {
+		clearSelection();
+		stopReorderPinned();
+		_activeSubItemsRow = nullptr;
+		clearPressed();
+		if (!_categoryList || _categoryFilterId != _filterId) {
+			_shownList->unfreeze();
+			_shownList = list;
+			_categoryFilterId = _filterId;
+			_categoryList = std::make_unique<IndexedList>(SortMode::Add, _filterId);
+		}
+		_categoryList->clear();
+		for (const auto row : *list) {
+			const auto history = row->history();
+			if (!history) {
+				continue;
+			}
+			const auto peer = history->peer;
+			const auto user = peer->asUser();
+			const auto matches = (_monstergramCategory == 1)
+				? (user && !user->isBot())
+				: (_monstergramCategory == 2)
+				? (peer->isChat() || peer->isMegagroup())
+				: (_monstergramCategory == 3)
+				? peer->isBroadcast()
+				: (user && user->isBot());
+			if (matches) {
+				_categoryList->addToEnd(row->key());
+			}
+		}
+		_categoryList->updateHeights(_narrowRatio);
+		list = _categoryList.get();
+	}
 	if (_shownList != list) {
 		_shownList->unfreeze();
 		_shownList = list;
@@ -5727,6 +5791,16 @@ bool InnerWidget::chooseCollapsedRow(Qt::KeyboardModifiers modifiers) {
 	Assert(row->folder != nullptr);
 	_controller->openFolder(row->folder);
 	return true;
+}
+
+void InnerWidget::setMonstergramCategory(int category) {
+	clearSelection();
+	stopReorderPinned();
+	_monstergramCategory = std::clamp(category, 0, 4);
+	refreshShownList();
+	refreshWithCollapsedRows(true);
+	refreshEmpty();
+	jumpToTop();
 }
 
 void InnerWidget::switchToFilter(FilterId filterId) {

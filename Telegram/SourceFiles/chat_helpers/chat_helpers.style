@@ -1874,3 +1874,7 @@ aiComposeBodyLabel: FlatLabel(defaultFlatLabel) {
 		}
 	}
 }
+
+monstergramComposeInset: 12px;
+monstergramComposeBottom: 14px;
+monstergramComposeRadius: 12px;

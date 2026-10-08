@@ -1664,11 +1664,8 @@ SessionController::SessionController(
 
 	const auto processFiltersMenu = [this] {
 		if (SessionNavigation::session().data().chatsFilters().has()) {
-			const auto isHorizontal
-				= Core::App().settings().chatFiltersHorizontal()
-					|| !enoughSpaceForFilters();
-			content()->toggleFiltersMenu(isHorizontal);
-			toggleFiltersMenu(!isHorizontal);
+			content()->toggleFiltersMenu(true);
+			toggleFiltersMenu(enoughSpaceForFilters());
 		} else {
 			content()->toggleFiltersMenu(false);
 			toggleFiltersMenu(enoughSpaceForFilters());
